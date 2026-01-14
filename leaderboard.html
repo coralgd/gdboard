@@ -6,7 +6,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-    import { getFirestore, collection, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
     // Firebase конфиг
     const firebaseConfig = {
@@ -26,35 +26,46 @@
     const logoutBtn = document.getElementById("logoutBtn");
 
     onAuthStateChanged(auth, async (user) => {
-      if (!user) return window.location.href = "index.html";
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
 
       const usersRef = collection(db, "users");
 
-      // ⚡ Запрос только verified пользователей, сортировка по points DESC
-      const q = query(
-        usersRef,
-        where("situation", "==", "verified"),
-        orderBy("points", "desc") // сортировка по убыванию очков
-      );
+      try {
+        // Получаем все verified пользователи
+        const q = query(usersRef, where("situation", "==", "verified"));
+        const snapshot = await getDocs(q);
 
-      const querySnapshot = await getDocs(q);
-      leaderboardList.innerHTML = "";
+        // Преобразуем в массив объектов
+        let users = snapshot.docs.map(doc => ({
+          id: doc.id,
+          nick: doc.data().nick || "Не указан",
+          points: typeof doc.data().points === "number" ? doc.data().points : 0
+        }));
 
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        const li = document.createElement("li");
+        // ⚡ Сортируем вручную по убыванию очков
+        users.sort((a, b) => b.points - a.points);
 
-        // Выделяем текущего пользователя
-        if (doc.id === user.uid) {
-          li.style.fontWeight = "bold";
-          li.style.color = "green";
-          li.textContent = `${data.nick || "Не указан"} — ${data.points || 0} очков (Вы)`;
-        } else {
-          li.textContent = `${data.nick || "Не указан"} — ${data.points || 0} очков`;
-        }
+        // Отображаем
+        leaderboardList.innerHTML = "";
+        users.forEach((data) => {
+          const li = document.createElement("li");
+          if (data.id === user.uid) {
+            li.style.fontWeight = "bold";
+            li.style.color = "green";
+            li.textContent = `${data.nick} — ${data.points} очков (Вы)`;
+          } else {
+            li.textContent = `${data.nick} — ${data.points} очков`;
+          }
+          leaderboardList.appendChild(li);
+        });
 
-        leaderboardList.appendChild(li);
-      });
+      } catch (err) {
+        console.error("Ошибка загрузки лидерборда:", err);
+        leaderboardList.innerHTML = "<li>Не удалось загрузить лидерборд</li>";
+      }
     });
 
     logoutBtn.addEventListener("click", async () => {
