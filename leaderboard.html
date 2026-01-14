@@ -46,43 +46,47 @@
         return window.location.href = "nick.html";
       }
 
+      // Получаем всех verified пользователей, сортировка по убыванию баллов
       const usersRef = collection(db, "users");
       const q = query(
         usersRef,
         where("situation", "==", "verified"),
         orderBy("points", "desc")
       );
-
       const snapshot = await getDocs(q);
+
       leaderboardList.innerHTML = "";
 
-      // Массив пользователей для подсчёта рангов
+      // Массив пользователей
       const usersArray = snapshot.docs.map(docItem => ({ id: docItem.id, ...docItem.data() }));
 
-      let ranks = [];
-      let prevPoints = null;
-      let rank = 0;
+      let rank = 0;          // текущее место
+      let prevPoints = null; // предыдущие баллы
+      let sameCount = 0;     // количество игроков с одинаковыми баллами
 
-      usersArray.forEach((userData, idx) => {
-        const points = userData.points || 0;
-
-        if (points !== prevPoints) {
-          rank = idx + 1; // "спортивная" система: новое место = индекс + 1
-          prevPoints = points;
-        }
-        ranks.push(rank);
-      });
-
-      // Отображение
       usersArray.forEach((userData, idx) => {
         const li = document.createElement("li");
-        let line = `${userData.nick || "Не указан"} — ${userData.points || 0}`;
+        const points = userData.points || 0;
+
+        // Спортивная система рангов
+        if (prevPoints === points) {
+          // игрок с такими же баллами, место не меняется
+          sameCount++;
+        } else {
+          rank += sameCount + 1; // новое место = предыдущее место + количество одинаковых выше
+          sameCount = 0;
+          prevPoints = points;
+        }
+
+        // Формируем строку: Ник — Баллы — Роль
+        let line = `${userData.nick || "Не указан"} — ${points}`;
         if (userData.role === "moderator") line += " Модер";
         if (userData.role === "elder") line += " Старший модер";
 
+        // Текущий игрок синим
         if (userData.id === user.uid) li.style.color = "blue";
 
-        li.textContent = `${ranks[idx]}. ${line}`;
+        li.textContent = `${rank}. ${line}`;
         leaderboardList.appendChild(li);
       });
     });
