@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Панель модератора</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import { getFirestore, collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
+      authDomain: "gdboard-add4a.firebaseapp.com",
+      projectId: "gdboard-add4a",
+      storageBucket: "gdboard-add4a.firebasestorage.app",
+      messagingSenderId: "883125028740",
+      appId: "1:883125028740:web:c504de4139943b8606bfd1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const usersList = document.getElementById("usersList");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return window.location.href = "index.html";
+
+      // Проверка роли
+      const userDoc = await getDocs(doc(db, "users", user.uid));
+      const userSnap = await getDoc(doc(db, "users", user.uid));
+      if (!userSnap.exists()) return window.location.href = "main.html";
+
+      const role = userSnap.data().role || "player";
+      if (role !== "moderator") return window.location.href = "main.html";
+
+      // Загружаем verified пользователей, исключая модераторов
+      const q = query(collection(db, "users"), where("situation", "==", "verified"));
+      const snapshot = await getDocs(q);
+
+      snapshot.forEach((docItem) => {
+        const data = docItem.data();
+        if (data.role === "moderator" || data.role === "elder") return; // исключаем модеров
+
+        const li = document.createElement("li");
+        li.textContent = data.nick || "Не указан";
+
+        const input = document.createElement("input");
+        input.type = "number";
+        input.value = data.points || 0;
+        input.style.width = "60px";
+        input.style.marginLeft = "10px";
+
+        const btn = document.createElement("button");
+        btn.textContent = "Изменить";
+        btn.style.marginLeft = "5px";
+
+        btn.addEventListener("click", async () => {
+          const newPoints = parseInt(input.value);
+          if (isNaN(newPoints)) return;
+          await updateDoc(doc(db, "users", docItem.id), { points: newPoints });
+          alert(`Очки ${data.nick} изменены на ${newPoints}`);
+        });
+
+        li.appendChild(input);
+        li.appendChild(btn);
+        usersList.appendChild(li);
+      });
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "index.html";
+    });
+  </script>
+</head>
+<body>
+  <h1>Панель модератора</h1>
+  <ul id="usersList"></ul>
+  <button id="logoutBtn">Выйти</button>
+</body>
+</html>
