@@ -6,7 +6,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, collection, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+    import { getFirestore, collection, query, where, orderBy, getDocs, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
@@ -39,15 +39,14 @@
       const role = data.role || "player";
       const situation = data.situation || "not requested";
 
-      // Проверка верификации
       if (role === "player" && situation !== "verified") {
         return window.location.href = "nick.html";
       }
 
       nickDisplay.textContent = data.nick || "Не указан";
-      pointsDisplay.textContent = data.points || 0; // отображаем Баллы
+      pointsDisplay.textContent = data.points || 0;
 
-      // Определяем место игрока на лидерборде
+      // Вычисляем место игрока по “спортивной системе”
       const usersRef = collection(db, "users");
       const q = query(
         usersRef,
@@ -56,16 +55,26 @@
       );
       const snapshot = await getDocs(q);
 
-      let rank = 1;
-      for (const docItem of snapshot.docs) {
+      let prevPoints = null;
+      let rank = 0;
+      let skipped = 0;
+
+      snapshot.forEach((docItem) => {
+        const points = docItem.data().points || 0;
+
+        if (prevPoints === points) {
+          skipped++;
+        } else {
+          rank += skipped + 1;
+          skipped = 0;
+          prevPoints = points;
+        }
+
         if (docItem.id === user.uid) {
           rankDisplay.textContent = rank;
-          break;
         }
-        rank++;
-      }
+      });
 
-      // Кнопка «Проверить»
       checkBtn.addEventListener("click", async () => {
         if (role === "moderator") {
           window.location.href = "moderator.html";
@@ -77,11 +86,7 @@
         }
       });
 
-      // Кнопка «Лидерборд»
-      leaderboardBtn.addEventListener("click", async () => {
-        if (role === "player" && situation !== "verified") {
-          return window.location.href = "nick.html";
-        }
+      leaderboardBtn.addEventListener("click", () => {
         window.location.href = "leaderboard.html";
       });
     });
