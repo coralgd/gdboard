@@ -2,12 +2,13 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Лидерборд</title>
+  <title>Лидерборд (тестовый)</title>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-    import { getFirestore, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+    import { getFirestore, collection, query, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
+    // Firebase конфиг
     const firebaseConfig = {
       apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
       authDomain: "gdboard-add4a.firebaseapp.com",
@@ -25,17 +26,26 @@
     const logoutBtn = document.getElementById("logoutBtn");
 
     onAuthStateChanged(auth, async (user) => {
-      if (!user) return window.location.href = "index.html";
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
 
+      // Запрос всех пользователей, сортировка по points
       const usersRef = collection(db, "users");
-      const q = query(usersRef, where("situation", "==", "verified"), orderBy("points", "desc"));
-      const querySnapshot = await getDocs(q);
+      const q = query(
+        usersRef,
+        orderBy("points", "desc"),
+        orderBy("__name__") // безопасно для Firestore, если points одинаковы
+      );
 
+      const querySnapshot = await getDocs(q);
       leaderboardList.innerHTML = "";
+
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         const li = document.createElement("li");
-        li.textContent = `${data.nick || "Не указан"} — ${data.points} очков`;
+        li.textContent = `${data.nick || "Не указан"} — ${data.points || 0} очков`;
         leaderboardList.appendChild(li);
       });
     });
@@ -47,7 +57,7 @@
   </script>
 </head>
 <body>
-  <h1>Лидерборд</h1>
+  <h1>Лидерборд (тестовый)</h1>
   <ul id="leaderboard"></ul>
   <button id="logoutBtn">Выйти</button>
 </body>
