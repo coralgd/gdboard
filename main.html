@@ -6,7 +6,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+    import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
@@ -23,32 +23,18 @@
 
     const nickElem = document.getElementById("nick");
     const logoutBtn = document.getElementById("logoutBtn");
+    const leaderboardBtn = document.getElementById("leaderboardBtn");
 
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        window.location.href = "index.html";
-        return;
-      }
+    onAuthStateChanged(auth, (user) => {
+      if (!user) return window.location.href = "index.html";
 
       const userDocRef = doc(db, "users", user.uid);
 
-      // Слушаем изменения документа
       onSnapshot(userDocRef, (docSnap) => {
-        if (!docSnap.exists()) {
-          window.location.href = "nick.html"; // нет документа, редирект на nick
-          return;
+        if (!docSnap.exists() || docSnap.data().situation !== "verified") {
+          return window.location.href = "nick.html";
         }
-
-        const data = docSnap.data();
-
-        if (data.situation !== "verified") {
-          // Если situation не verified — редирект обратно на nick
-          window.location.href = "nick.html";
-          return;
-        }
-
-        // Показываем ник
-        nickElem.textContent = data.nick || "Не указан";
+        nickElem.textContent = docSnap.data().nick || "Не указан";
       });
     });
 
@@ -56,11 +42,16 @@
       await signOut(auth);
       window.location.href = "index.html";
     });
+
+    leaderboardBtn.addEventListener("click", () => {
+      window.location.href = "leaderboard.html";
+    });
   </script>
 </head>
 <body>
   <h1>Главная страница</h1>
   <p>Ваш ник: <span id="nick"></span></p>
+  <button id="leaderboardBtn">Лидерборд</button>
   <button id="logoutBtn">Выйти</button>
 </body>
 </html>
