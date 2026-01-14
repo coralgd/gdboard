@@ -6,7 +6,15 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-    import { getFirestore, collection, query, where, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+    import { 
+      getFirestore, 
+      collection, 
+      query, 
+      where, 
+      getDocs, 
+      getDoc, 
+      doc 
+    } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
@@ -26,6 +34,7 @@
     onAuthStateChanged(auth, async (user) => {
       if (!user) return window.location.href = "index.html";
 
+      // Получаем документ текущего пользователя
       const userDocSnap = await getDoc(doc(db, "users", user.uid));
       if (!userDocSnap.exists()) return window.location.href = "index.html";
 
@@ -42,6 +51,9 @@
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("situation", "==", "verified"));
       const snapshot = await getDocs(q);
+
+      // Очищаем список перед добавлением (на случай повторной загрузки)
+      leaderboardList.innerHTML = "";
 
       snapshot.forEach((docItem) => {
         const userData = docItem.data();
