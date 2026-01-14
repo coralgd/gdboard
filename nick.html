@@ -6,8 +6,9 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
+    // Firebase конфиг
     const firebaseConfig = {
       apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
       authDomain: "gdboard-add4a.firebaseapp.com",
@@ -28,40 +29,53 @@
     const situationElem = document.getElementById("situation");
 
     let currentUser = null;
+    let userDocRef = null;
 
+    // Проверка текущего пользователя
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        window.location.href = "index.html";
+        window.location.href = "index.html"; // если не вошёл
         return;
       }
 
       currentUser = user;
       userEmailElem.textContent = user.email;
 
-      // Проверяем существующий документ пользователя
-      const userDocRef = doc(db, "users", user.uid);
-      const userDocSnap = await getDoc(userDocRef);
+      userDocRef = doc(db, "users", currentUser.uid);
 
-      if (userDocSnap.exists()) {
-        const data = userDocSnap.data();
-        nickInput.value = data.nick || "";
+      // Проверяем существующий документ
+      const userDocSnap = await getDoc(userDocRef);
+      if (!userDocSnap.exists()) {
+        // Создаём документ при регистрации, если его нет
+        await setDoc(userDocRef, {
+          uid: currentUser.uid,
+          email: currentUser.email,
+          situation: "not requested"
+        });
+      }
+
+      // Слушаем изменения документа
+      onSnapshot(userDocRef, (docSnap) => {
+        if (!docSnap.exists()) return;
+        const data = docSnap.data();
+
+        // Обновляем статус на странице
         situationElem.textContent = data.situation || "not requested";
 
-        if (data.situation === "requested") {
+        // Блокируем поле и кнопку, если ник уже отправлен
+        if (data.situation === "requested" || data.situation === "verified") {
           nickInput.disabled = true;
           submitNickBtn.disabled = true;
         }
-      } else {
-        // На всякий случай, если документ отсутствует
-        await setDoc(userDocRef, {
-          uid: user.uid,
-          email: user.email,
-          situation: "not requested"
-        });
-        situationElem.textContent = "not requested";
-      }
+
+        // Автоматический редирект на main.html при verified
+        if (data.situation === "verified") {
+          window.location.href = "main.html";
+        }
+      });
     });
 
+    // Отправка ника
     submitNickBtn.addEventListener("click", async () => {
       const nickValue = nickInput.value.trim();
       if (!nickValue) {
@@ -69,26 +83,22 @@
         return;
       }
 
-      const userDocRef = doc(db, "users", currentUser.uid);
       const userDocSnap = await getDoc(userDocRef);
-
       if (userDocSnap.exists() && userDocSnap.data().situation === "requested") {
         alert("Вы уже отправили ник!");
         return;
       }
 
-      // Обновляем документ пользователя в users
+      // Обновляем документ пользователя
       await updateDoc(userDocRef, {
         nick: nickValue,
         situation: "requested"
       });
 
-      situationElem.textContent = "requested";
-      nickInput.disabled = true;
-      submitNickBtn.disabled = true;
       alert("Ник успешно отправлен!");
     });
 
+    // Выход из аккаунта
     logoutBtn.addEventListener("click", async () => {
       await signOut(auth);
       window.location.href = "index.html";
