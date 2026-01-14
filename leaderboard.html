@@ -46,7 +46,6 @@
         return window.location.href = "nick.html";
       }
 
-      // Запрос всех verified пользователей с сортировкой по очкам по убыванию
       const usersRef = collection(db, "users");
       const q = query(
         usersRef,
@@ -57,31 +56,35 @@
       const snapshot = await getDocs(q);
       leaderboardList.innerHTML = "";
 
-      let rank = 1; // Счётчик мест
+      let rank = 0;          // количество игроков, чтобы корректно вычислить место
+      let displayRank = 0;   // отображаемое место
+      let prevPoints = null;
 
       snapshot.forEach((docItem) => {
         const userData = docItem.data();
         const li = document.createElement("li");
 
-        let displayName = userData.nick || "Не указан";
+        rank++; // каждый игрок увеличивает счётчик
+        if (prevPoints !== userData.points) {
+          displayRank = rank; // новое место для другого значения баллов
+          prevPoints = userData.points;
+        }
 
-        // Значки ролей
-        if (userData.role === "moderator") displayName += " 🛠️";
-        if (userData.role === "elder") displayName += " ⚔️";
+        // Формируем строку: Ник — Баллы — Значок роли
+        let line = `${userData.nick || "Не указан"} — ${userData.points || 0}`;
+        if (userData.role === "moderator") line += " 🛠️";
+        if (userData.role === "elder") line += " ⚔️";
 
-        // Ник текущего пользователя — синий
         if (docItem.id === user.uid) li.style.color = "blue";
 
-        li.textContent = `${rank}. ${displayName} — ${userData.points || 0} очков`;
+        li.textContent = `${displayRank}. ${line}`;
         leaderboardList.appendChild(li);
-
-        rank++; // Следующее место
       });
     });
   </script>
 </head>
 <body>
   <h1>Лидерборд</h1>
-  <ol id="leaderboardList"></ol> <!-- заменили ul на ol -->
+  <ol id="leaderboardList"></ol>
 </body>
 </html>
