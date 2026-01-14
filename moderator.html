@@ -27,16 +27,16 @@
     onAuthStateChanged(auth, async (user) => {
       if (!user) return window.location.href = "index.html";
 
-      // Проверка роли
-      const userDoc = await getDocs(doc(db, "users", user.uid));
+      // Проверка роли текущего пользователя
       const userSnap = await getDoc(doc(db, "users", user.uid));
       if (!userSnap.exists()) return window.location.href = "main.html";
 
       const role = userSnap.data().role || "player";
       if (role !== "moderator") return window.location.href = "main.html";
 
-      // Загружаем verified пользователей, исключая модераторов
-      const q = query(collection(db, "users"), where("situation", "==", "verified"));
+      // Загружаем всех verified пользователей, кроме модеров и elder
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("situation", "==", "verified"));
       const snapshot = await getDocs(q);
 
       snapshot.forEach((docItem) => {
@@ -72,12 +72,4 @@
     logoutBtn.addEventListener("click", async () => {
       await signOut(auth);
       window.location.href = "index.html";
-    });
-  </script>
-</head>
-<body>
-  <h1>Панель модератора</h1>
-  <ul id="usersList"></ul>
-  <button id="logoutBtn">Выйти</button>
-</body>
-</html>
+    })
