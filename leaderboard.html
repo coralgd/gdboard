@@ -35,7 +35,6 @@
     onAuthStateChanged(auth, async (user) => {
       if (!user) return window.location.href = "index.html";
 
-      // Проверка верификации текущего пользователя
       const userDocSnap = await getDoc(doc(db, "users", user.uid));
       if (!userDocSnap.exists()) return window.location.href = "index.html";
 
@@ -47,7 +46,7 @@
         return window.location.href = "nick.html";
       }
 
-      // ⚡ Запрос всех verified пользователей с сортировкой по очкам по убыванию
+      // Запрос всех verified пользователей с сортировкой по очкам по убыванию
       const usersRef = collection(db, "users");
       const q = query(
         usersRef,
@@ -56,21 +55,33 @@
       );
 
       const snapshot = await getDocs(q);
-
-      // Очищаем список перед добавлением
       leaderboardList.innerHTML = "";
+
+      let rank = 1; // Счётчик мест
 
       snapshot.forEach((docItem) => {
         const userData = docItem.data();
         const li = document.createElement("li");
-        li.textContent = `${userData.nick || "Не указан"} — ${userData.points || 0} очков`;
+
+        let displayName = userData.nick || "Не указан";
+
+        // Значки ролей
+        if (userData.role === "moderator") displayName += " 🛠️";
+        if (userData.role === "elder") displayName += " ⚔️";
+
+        // Ник текущего пользователя — синий
+        if (docItem.id === user.uid) li.style.color = "blue";
+
+        li.textContent = `${rank}. ${displayName} — ${userData.points || 0} очков`;
         leaderboardList.appendChild(li);
+
+        rank++; // Следующее место
       });
     });
   </script>
 </head>
 <body>
   <h1>Лидерборд</h1>
-  <ul id="leaderboardList"></ul>
+  <ol id="leaderboardList"></ol> <!-- заменили ul на ol -->
 </body>
 </html>
