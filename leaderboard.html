@@ -56,31 +56,33 @@
       const snapshot = await getDocs(q);
       leaderboardList.innerHTML = "";
 
-      // Логика вычисления рангов "спортивным" способом
+      // Массив пользователей для подсчёта рангов
+      const usersArray = snapshot.docs.map(docItem => ({ id: docItem.id, ...docItem.data() }));
+
+      let ranks = [];
       let prevPoints = null;
       let rank = 0;
-      let skipped = 0;
 
-      snapshot.forEach((docItem) => {
-        const userData = docItem.data();
-        const li = document.createElement("li");
+      usersArray.forEach((userData, idx) => {
         const points = userData.points || 0;
 
-        if (prevPoints === points) {
-          skipped++;
-        } else {
-          rank += skipped + 1;
-          skipped = 0;
+        if (points !== prevPoints) {
+          rank = idx + 1; // "спортивная" система: новое место = индекс + 1
           prevPoints = points;
         }
+        ranks.push(rank);
+      });
 
-        let line = `${userData.nick || "Не указан"} — ${points}`;
-        if (userData.role === "moderator") line += " 🛠️";
-        if (userData.role === "elder") line += " ⚔️";
+      // Отображение
+      usersArray.forEach((userData, idx) => {
+        const li = document.createElement("li");
+        let line = `${userData.nick || "Не указан"} — ${userData.points || 0}`;
+        if (userData.role === "moderator") line += " Модер";
+        if (userData.role === "elder") line += " Старший модер";
 
-        if (docItem.id === user.uid) li.style.color = "blue";
+        if (userData.id === user.uid) li.style.color = "blue";
 
-        li.textContent = `${rank}. ${line}`;
+        li.textContent = `${ranks[idx]}. ${line}`;
         leaderboardList.appendChild(li);
       });
     });
