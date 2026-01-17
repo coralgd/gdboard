@@ -23,7 +23,15 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/fireba
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 import { getFirestore, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
-const firebaseConfig = {/* твой config */};
+const firebaseConfig = {
+  apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
+  authDomain: "gdboard-add4a.firebaseapp.com",
+  projectId: "gdboard-add4a",
+  storageBucket: "gdboard-add4a.appspot.com",
+  messagingSenderId: "883125028740",
+  appId: "1:883125028740:web:c504de4139943b8606bfd1"
+};
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -37,8 +45,7 @@ onAuthStateChanged(auth, async user=>{
     const nick=input.value.trim();
     if(!nick) return alert('Введите ник');
     const userRef = doc(db,'users',user.uid);
-    const data = {nick:nick, situation:'requested'};
-    await updateDoc(userRef,data);
+    await updateDoc(userRef,{nick:nick, situation:'requested'});
     alert('Ник отправлен! Ждите верификации.');
   });
 });
