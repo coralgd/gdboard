@@ -1,44 +1,43 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Nick</title>
-<link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div class="app">
-  <div class="panel">
-    <h1>Ник</h1>
-    <input id="nick" placeholder="Введите ник"><br><br>
-    <button class="btn" id="send">Отправить</button>
+<canvas id="hud-bg"></canvas>
+
+<div class="panel">
+  <h2>Отправьте свой ник</h2>
+  <div class="row">
+    <input type="text" id="nickInput" placeholder="Ваш ник">
+    <div class="actions">
+      <button id="sendNick">Отправить</button>
+    </div>
   </div>
+  <p id="status">not requested</p>
 </div>
 
-<script src="hudBackground.js"></script>
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-import { getFirestore, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+import { auth, db } from "./firebase.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const app = initializeApp({
-  apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
-  authDomain: "gdboard-add4a.firebaseapp.com",
-  projectId: "gdboard-add4a"
-});
+onAuthStateChanged(auth, async user => {
+  if(!user) location.href="login.html";
 
-const auth = getAuth(app);
-const db = getFirestore(app);
+  const ref = doc(db,"users",user.uid);
+  const data = (await getDoc(ref)).data();
 
-onAuthStateChanged(auth,u=>{
-  if(!u) location.href="index.html";
-  send.onclick=async()=>{
-    await updateDoc(doc(db,"users",u.uid),{
-      nick: nick.value,
-      situation: "requested"
-    });
-    alert("Ник отправлен");
+  if(data.situation==="requested") location.href="main.html";
+
+  document.getElementById("sendNick").onclick = async () => {
+    const nick = document.getElementById("nickInput").value.trim();
+    if(!nick) return alert("Введите ник!");
+    await updateDoc(ref,{nick, situation:"requested"});
+    document.getElementById("status").innerText="requested";
   };
 });
 </script>
+<script src="hudBackground.js"></script>
 </body>
 </html>
