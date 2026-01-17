@@ -1,24 +1,24 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>GDBoard - Вход/Регистрация</title>
+  <title>GDBoard – Вход/Регистрация</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <canvas id="hud-bg"></canvas>
 
-<div class="panel">
+<div class="panel metal-panel">
   <h2>Вход / Регистрация</h2>
   <div class="row">
     <input type="email" id="email" placeholder="Почта">
     <input type="password" id="password" placeholder="Пароль">
   </div>
   <div class="row actions">
-    <button id="loginBtn">Войти</button>
-    <button id="registerBtn">Регистрация</button>
+    <button id="loginBtn" class="hud-btn">Войти</button>
+    <button id="registerBtn" class="hud-btn">Регистрация</button>
   </div>
-  <p id="status" style="color:red"></p>
+  <p id="status" style="color:red; text-align:center;"></p>
 </div>
 
 <script type="module">
@@ -34,18 +34,14 @@ const status = document.getElementById("status");
 document.getElementById("loginBtn").onclick = async () => {
   try {
     const cred = await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
-    console.log("Успешный вход");
-
     const ref = doc(db,"users",cred.user.uid);
     const snap = await getDoc(ref);
     const data = snap.data();
-
     if(!data || data.situation==="not requested"){
       location.href="nick.html";
     } else {
       location.href="main.html";
     }
-
   } catch(e){
     console.error(e);
     status.innerText = e.message;
@@ -56,17 +52,13 @@ document.getElementById("loginBtn").onclick = async () => {
 document.getElementById("registerBtn").onclick = async () => {
   try {
     const cred = await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
-    console.log("Регистрация успешна");
-
     await setDoc(doc(db,"users",cred.user.uid),{
       nick:"",
       points:0,
       situation:"not requested",
       role:"player"
     });
-
     location.href="nick.html";
-
   } catch(e){
     console.error(e);
     status.innerText = e.message;
