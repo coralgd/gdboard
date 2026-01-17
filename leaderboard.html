@@ -5,24 +5,23 @@
 <title>Лидерборд</title>
 <link rel="stylesheet" href="style.css">
 <style>
-/* Базовый светлый фон с градиентом */
 body {
   margin: 0;
   padding: 20px;
   font-family: 'Orbitron', sans-serif;
-  background: linear-gradient(160deg, #f0f2f5, #d0d6dd);
+  background: linear-gradient(160deg, #2c3e50, #34495e); /* темно-синий фон */
   display: flex;
   flex-direction: column;
   align-items: center;
   min-height: 100vh;
+  color: #ecf0f1;
 }
 
-/* Заголовок */
 h1 {
   font-size: 2.5em;
   margin-bottom: 20px;
-  color: #2c3e50;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+  color: #ecf0f1;
+  text-shadow: 1px 1px 4px rgba(0,0,0,0.5);
 }
 
 /* Контейнер лидерборда */
@@ -31,24 +30,36 @@ h1 {
   max-width: 900px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+}
+
+/* Заголовки */
+.table-header {
+  display: grid;
+  grid-template-columns: 1fr 3fr 2fr 2fr;
+  padding: 12px 15px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #2980b9, #3498db);
+  color: #fff;
+  font-weight: bold;
+  text-align: center;
 }
 
 /* Карточка игрока */
 .table-row {
   display: grid;
-  grid-template-columns: 1fr 3fr 2fr 2fr 2fr; /* Место | Ник | Баллы | Роль | Действия */
+  grid-template-columns: 1fr 3fr 2fr 2fr;
   padding: 12px 15px;
   border-radius: 12px;
-  background: linear-gradient(145deg, #ffffff, #e0e4e8);
-  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+  background: linear-gradient(145deg, #34495e, #3d566e);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.3);
   align-items: center;
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .table-row:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
 }
 
 /* Текущий игрок */
@@ -62,46 +73,14 @@ h1 {
   font-weight: bold;
 }
 
-/* Роли */
-.role-player { color: #2c3e50; }       /* Игрок */
-.role-moderator { color: #e67e22; }   /* Модер */
-.role-elder { color: #c0392b; }       /* Старший модер */
-
-/* Кнопки действий */
-.table-row button {
-  padding: 6px 12px;
-  border-radius: 8px;
-  border: none;
-  background: #3498db;
-  color: #fff;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.2s;
-}
-
-.table-row button:hover {
-  background: #2980b9;
-  transform: translateY(-2px);
-  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
-}
-
-/* Заголовок таблицы */
-.table-header {
-  display: grid;
-  grid-template-columns: 1fr 3fr 2fr 2fr 2fr;
-  padding: 12px 15px;
-  border-radius: 12px;
-  background: #3498db;
-  color: #fff;
-  font-weight: bold;
-  margin-bottom: 8px;
-  text-align: center;
-}
+/* Цвета ролей */
+.role-player { color: #ecf0f1; }       /* Игрок */
+.role-moderator { color: #f39c12; }   /* Модер */
+.role-elder { color: #e74c3c; }       /* Старший модер */
 
 /* Адаптив */
 @media screen and (max-width: 700px) {
   .table-row, .table-header { grid-template-columns: 1fr 2fr 2fr 2fr; }
-  .table-row button { padding: 4px 8px; font-size: 0.8em; }
 }
 </style>
 </head>
@@ -114,7 +93,6 @@ h1 {
     <div>Ник</div>
     <div>Баллы</div>
     <div>Роль</div>
-    <div>Действия</div>
   </div>
 </div>
 
@@ -158,7 +136,7 @@ onAuthStateChanged(auth, async (user) => {
   let prevRank = 0;
   let skip = 1;
 
-  usersArray.forEach((userData, index) => {
+  usersArray.forEach((userData) => {
     const points = userData.points || 0;
     if (prevPoints === null || points < prevPoints) {
       prevRank += skip;
@@ -168,7 +146,7 @@ onAuthStateChanged(auth, async (user) => {
     }
     prevPoints = points;
 
-    // Игроки без верификации и обычные не показываем (для обычного игрока)
+    // Игроки без верификации и обычные не показываем
     if (userData.situation !== "verified" && userData.role === "player") return;
 
     const row = document.createElement("div");
@@ -177,15 +155,11 @@ onAuthStateChanged(auth, async (user) => {
 
     const roleClass = userData.role === "elder" ? "role-elder" : userData.role === "moderator" ? "role-moderator" : "role-player";
 
-    // Кнопки действий (пока для примера)
-    const actionButton = `<button>Подробнее</button>`;
-
     row.innerHTML = `
       <div>${prevRank}</div>
       <div>${userData.nick || "Не указан"}</div>
       <div>${points}</div>
       <div class="${roleClass}">${userData.role === "elder" ? "Старший модер" : userData.role === "moderator" ? "Модер" : "Игрок"}</div>
-      <div>${actionButton}</div>
     `;
     leaderboardDiv.appendChild(row);
   });
