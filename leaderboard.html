@@ -1,4 +1,18 @@
-// leaderboard.html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>GDBoard - Лидерборд</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="panel">
+  <h2>Лидерборд</h2>
+  <div id="leaderboard"></div>
+</div>
+
+<script type="module">
 import { db, auth } from "./firebase.js";
 import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -9,7 +23,6 @@ async function loadLeaderboard() {
   const snapshot = await getDocs(q);
   let users = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
 
-  // Сортировка уже по points desc
   let rank = 1;
   let prevPoints = null;
   let skipRank = 0;
@@ -33,19 +46,14 @@ async function loadLeaderboard() {
     const userDiv = document.createElement("div");
     userDiv.className = "leader-row";
 
-    // Формат: Баллы | Ник | Место
     let roleText = "";
     if(user.role === "moderator") roleText = "Модер";
     if(user.role === "elder") roleText = "Старший модер";
 
     userDiv.innerHTML = `
-      <span class="points">${user.points}</span> — 
-      <span class="nick">${user.nick}</span> 
-      ${roleText ? roleText : ""} 
-      <span class="place">${place}</span>
+      ${user.points} — ${user.nick} ${roleText ? roleText : ""} ${place ? place : ""}
     `;
 
-    // Выделяем текущего игрока
     if(auth.currentUser && auth.currentUser.uid === user.id){
       userDiv.classList.add("current-player");
     }
@@ -55,3 +63,7 @@ async function loadLeaderboard() {
 }
 
 loadLeaderboard();
+</script>
+
+</body>
+</html>
