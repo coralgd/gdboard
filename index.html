@@ -9,8 +9,7 @@
 <canvas id="hud-bg"></canvas>
 
 <div class="panel">
-
-  <!-- Единая металлическая карточка -->
+  <!-- Единая HUD-карточка -->
   <div class="card full-card">
     <h2>Вход / Регистрация</h2>
 
@@ -29,7 +28,6 @@
     <!-- Статус -->
     <p id="status" style="color:red; text-align:center; margin-top:10px;"></p>
   </div>
-
 </div>
 
 <script type="module">
@@ -44,7 +42,6 @@ const status = document.getElementById("status");
 document.getElementById("loginBtn").onclick = async () => {
   try {
     const cred = await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
-
     const ref = doc(db,"users",cred.user.uid);
     const snap = await getDoc(ref);
     const data = snap.data();
@@ -64,14 +61,12 @@ document.getElementById("loginBtn").onclick = async () => {
 document.getElementById("registerBtn").onclick = async () => {
   try {
     const cred = await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
-
     await setDoc(doc(db,"users",cred.user.uid),{
       nick:"",
       points:0,
       situation:"not requested",
       role:"player"
     });
-
     location.href="nick.html";
 
   } catch(e){
