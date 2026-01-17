@@ -1,107 +1,62 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Nick Page</title>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+<meta charset="UTF-8">
+<title>Ник</title>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
-      authDomain: "gdboard-add4a.firebaseapp.com",
-      projectId: "gdboard-add4a",
-      storageBucket: "gdboard-add4a.firebasestorage.app",
-      messagingSenderId: "883125028740",
-      appId: "1:883125028740:web:c504de4139943b8606bfd1"
-    };
+const firebaseConfig = {
+  apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
+  authDomain: "gdboard-add4a.firebaseapp.com",
+  projectId: "gdboard-add4a",
+  storageBucket: "gdboard-add4a.firebasestorage.app",
+  messagingSenderId: "883125028740",
+  appId: "1:883125028740:web:c504de4139943b8606bfd1"
+};
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-    const userEmailElem = document.getElementById("userEmail");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const nickInput = document.getElementById("nickInput");
-    const submitNickBtn = document.getElementById("submitNickBtn");
-    const situationElem = document.getElementById("situation");
+const nickInput = document.getElementById("nickInput");
+const submitBtn = document.getElementById("submitNick");
+const statusMessage = document.getElementById("statusMessage");
 
-    let currentUser = null;
-    let userDocRef = null;
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return window.location.href = "index.html";
 
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        window.location.href = "index.html";
-        return;
-      }
+  const userRef = doc(db, "users", user.uid);
+  const userSnap = await getDoc(userRef);
+  if (!userSnap.exists()) return window.location.href = "index.html";
 
-      currentUser = user;
-      userEmailElem.textContent = user.email;
+  const data = userSnap.data();
+  if (data.situation === "verified") return window.location.href = "main.html";
+  if (data.nick) nickInput.value = data.nick;
+});
 
-      userDocRef = doc(db, "users", currentUser.uid);
+submitBtn.addEventListener("click", async () => {
+  const nick = nickInput.value.trim();
+  if (!nick) return;
 
-      const userDocSnap = await getDoc(userDocRef);
-      if (!userDocSnap.exists()) {
-        await setDoc(userDocRef, {
-          uid: currentUser.uid,
-          email: currentUser.email,
-          situation: "not requested",
-          points: 0
-        });
-      }
+  const user = auth.currentUser;
+  const userRef = doc(db, "users", user.uid);
+  const userSnap = await getDoc(userRef);
+  const data = userSnap.data();
 
-      // Слушаем изменения документа
-      onSnapshot(userDocRef, (docSnap) => {
-        if (!docSnap.exists()) return;
-        const data = docSnap.data();
+  if (data.situation === "requested" || data.situation === "verified") return;
 
-        situationElem.textContent = data.situation || "not requested";
-
-        if (data.situation === "requested" || data.situation === "verified") {
-          nickInput.disabled = true;
-          submitNickBtn.disabled = true;
-        }
-
-        if (data.situation === "verified") {
-          window.location.href = "main.html";
-        }
-      });
-    });
-
-    submitNickBtn.addEventListener("click", async () => {
-      const nickValue = nickInput.value.trim();
-      if (!nickValue) return alert("Введите ник!");
-
-      const userDocSnap = await getDoc(userDocRef);
-      if (userDocSnap.exists() && userDocSnap.data().situation === "requested") {
-        return alert("Вы уже отправили ник!");
-      }
-
-      await updateDoc(userDocRef, {
-        nick: nickValue,
-        situation: "requested"
-      });
-
-      alert("Ник успешно отправлен!");
-    });
-
-    logoutBtn.addEventListener("click", async () => {
-      await signOut(auth);
-      window.location.href = "index.html";
-    });
-  </script>
+  await updateDoc(userRef, { nick, situation: "requested" });
+  statusMessage.textContent = "Ник отправлен!";
+});
+</script>
 </head>
 <body>
-  <h1>Добро пожаловать!</h1>
-  <p>Ваш email: <span id="userEmail"></span></p>
-
-  <h2>Отправка ника</h2>
-  <input type="text" id="nickInput" placeholder="Введите ник"><br>
-  <button id="submitNickBtn">Отправить</button><br>
-  <p>Статус: <span id="situation">not requested</span></p>
-
-  <br>
-  <button id="logoutBtn">Выйти</button>
+<h1>Введите ник</h1>
+<input id="nickInput" placeholder="Ник" />
+<button id="submitNick">Отправить</button>
+<p id="statusMessage"></p>
 </body>
 </html>
