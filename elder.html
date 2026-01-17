@@ -5,7 +5,6 @@
 </head>
 <body>
 <canvas id="hud-bg"></canvas>
-
 <div class="panel" id="list"></div>
 
 <script type="module">
@@ -25,7 +24,6 @@ onAuthStateChanged(auth, async user => {
     const row=document.createElement("div");
     row.className="row";
 
-    // Кнопки динамически меняются
     let modBtnText = (u.role==="moderator") ? "Снять Модера" : "Сделать Модером";
     let modBtnClass = (u.role==="moderator") ? "danger" : "";
     let verBtnText = (u.situation==="verified") ? "Снять Вериф" : "Вериф";
@@ -41,8 +39,8 @@ onAuthStateChanged(auth, async user => {
         <button class="${modBtnClass} modBtn">${modBtnText}</button>
       </div>
     `;
-    const pointsInput = row.querySelector("input");
 
+    const pointsInput = row.querySelector("input");
     row.querySelector(".pointsBtn").onclick = ()=>updateDoc(d.ref,{points:+pointsInput.value});
     row.querySelector(".verBtn").onclick = async ()=>{
       const newStatus = (u.situation==="verified")?"not verified":"verified";
