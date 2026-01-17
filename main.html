@@ -1,49 +1,59 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Main</title>
-<link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div class="app">
-  <div class="panel">
-    <h1>Профиль</h1>
-    <div id="info"></div><br>
-    <button class="btn" onclick="location.href='leaderboard.html'">Лидерборд</button>
-    <button class="btn" id="check">Проверить</button>
-    <p id="err" style="color:var(--danger)"></p>
+<canvas id="hud-bg"></canvas>
+
+<div class="panel">
+  <h2>Главная</h2>
+  <div class="row">
+    <div>Ваш ник:</div>
+    <div id="nick"></div>
+  </div>
+  <div class="row">
+    <div>Баллы:</div>
+    <div id="points"></div>
+  </div>
+  <div class="row">
+    <div>Место:</div>
+    <div id="place"></div>
+  </div>
+  <div class="row actions">
+    <button id="leaderboardBtn">Лидерборд</button>
+    <button id="checkBtn">Проверить</button>
+    <p id="checkStatus" style="color:red"></p>
   </div>
 </div>
 
-<script src="hudBackground.js"></script>
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+import { auth, db } from "./firebase.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const app = initializeApp({
-  apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
-  authDomain: "gdboard-add4a.firebaseapp.com",
-  projectId: "gdboard-add4a"
-});
+onAuthStateChanged(auth, async user => {
+  if(!user) location.href="login.html";
+  const ref = doc(db,"users",user.uid);
+  const data = (await getDoc(ref)).data();
 
-const auth = getAuth(app);
-const db = getFirestore(app);
+  if(data.situation!=="verified") location.href="nick.html";
 
-onAuthStateChanged(auth, async u=>{
-  if(!u) return location.href="index.html";
-  const d=(await getDoc(doc(db,"users",u.uid))).data();
-  if(d.situation!=="verified") location.href="nick.html";
+  document.getElementById("nick").innerText = data.nick;
+  document.getElementById("points").innerText = data.points;
+  document.getElementById("place").innerText = data.place;
 
-  info.innerHTML=`Ник: ${d.nick}<br>Баллы: ${d.points}`;
+  document.getElementById("leaderboardBtn").onclick = ()=>location.href="leaderboard.html";
 
-  check.onclick=()=>{
-    if(d.role==="moderator") location.href="moderator.html";
-    else if(d.role==="elder") location.href="elder.html";
-    else err.textContent="Ошибка: модерки нет";
+  document.getElementById("checkBtn").onclick = ()=>{
+    if(data.role==="moderator"||data.role==="elder"){
+      location.href=(data.role==="elder"?"elder.html":"moderator.html");
+    }else{
+      document.getElementById("checkStatus").innerText="Ошибка: модерки нет";
+    }
   };
 });
 </script>
+<script src="hudBackground.js"></script>
 </body>
 </html>
