@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>GDBoard - Ник</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -29,7 +27,6 @@ onAuthStateChanged(auth, async user => {
 
   const ref = doc(db,"users",user.uid);
   const snap = await getDoc(ref);
-
   if(!snap.exists()){
     await setDoc(ref,{
       nick:"",
@@ -40,11 +37,7 @@ onAuthStateChanged(auth, async user => {
   }
 
   const data = (await getDoc(ref)).data();
-
-  // Редирект только если VERIFIED
-  if(data.situation==="verified"){
-    location.href="main.html";
-  }
+  if(data.situation==="requested") location.href="main.html";
 
   document.getElementById("sendNick").onclick = async () => {
     const nick = document.getElementById("nickInput").value.trim();
