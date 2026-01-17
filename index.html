@@ -30,6 +30,7 @@ const emailInput = document.getElementById("email");
 const passInput = document.getElementById("password");
 const status = document.getElementById("status");
 
+// Вход
 document.getElementById("loginBtn").onclick = async () => {
   try {
     const cred = await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
@@ -51,6 +52,7 @@ document.getElementById("loginBtn").onclick = async () => {
   }
 };
 
+// Регистрация
 document.getElementById("registerBtn").onclick = async () => {
   try {
     const cred = await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
@@ -71,6 +73,7 @@ document.getElementById("registerBtn").onclick = async () => {
   }
 };
 </script>
+
 <script src="hudBackground.js"></script>
 </body>
 </html>
