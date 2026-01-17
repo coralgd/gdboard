@@ -6,7 +6,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-import { getFirestore, collection, query, where, getDocs, getDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+import { getFirestore, collection, query, where, getDocs, doc, getDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
@@ -50,16 +50,17 @@ onAuthStateChanged(auth, async (user) => {
     const li = document.createElement("li");
     const points = userData.points || 0;
 
-    // Вычисляем место “спортивным” способом
+    // Спортивная система рангов
     let rank;
     if (points === prevPoints) {
-      rank = prevRank;
+      rank = prevRank; // одинаковое место для одинаковых баллов
     } else {
-      rank = index + 1;
+      rank = index + 1; // новое место = индекс + 1
       prevPoints = points;
       prevRank = rank;
     }
 
+    // Формируем строку: Ник — Баллы — Роль
     let line = `${userData.nick || "Не указан"} — ${points}`;
     if (userData.role === "moderator") line += " Модер";
     if (userData.role === "elder") line += " Старший модер";
