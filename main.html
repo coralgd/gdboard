@@ -6,14 +6,10 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
 <div class="app">
   <div class="panel">
     <h1>Профиль</h1>
-
-    <div id="info"></div>
-    <div class="hud-line"></div>
-
+    <div id="info"></div><br>
     <button class="btn" onclick="location.href='leaderboard.html'">Лидерборд</button>
     <button class="btn" id="check">Проверить</button>
     <p id="err" style="color:var(--danger)"></p>
@@ -35,23 +31,17 @@ const app = initializeApp({
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-onAuthStateChanged(auth, async user => {
-  if (!user) return location.href="index.html";
+onAuthStateChanged(auth, async u=>{
+  if(!u) return location.href="index.html";
+  const d=(await getDoc(doc(db,"users",u.uid))).data();
+  if(d.situation!=="verified") location.href="nick.html";
 
-  const snap = await getDoc(doc(db,"users",user.uid));
-  const u = snap.data();
+  info.innerHTML=`Ник: ${d.nick}<br>Баллы: ${d.points}`;
 
-  if (u.situation !== "verified") location.href="nick.html";
-
-  info.innerHTML = `
-    Ник: ${u.nick}<br>
-    Баллы: ${u.points}
-  `;
-
-  check.onclick = () => {
-    if (u.role === "moderator") location.href="moderator.html";
-    else if (u.role === "elder") location.href="elder.html";
-    else err.textContent = "Ошибка: модерки нет";
+  check.onclick=()=>{
+    if(d.role==="moderator") location.href="moderator.html";
+    else if(d.role==="elder") location.href="elder.html";
+    else err.textContent="Ошибка: модерки нет";
   };
 });
 </script>
