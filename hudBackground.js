@@ -1,37 +1,46 @@
 const canvas = document.getElementById("hud-bg");
 const ctx = canvas.getContext("2d");
+let w = canvas.width = window.innerWidth;
+let h = canvas.height = window.innerHeight;
 
-function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+window.addEventListener("resize",()=>{
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+});
+
+const gridSize = 40;
+const lines = [];
+
+for(let x=0;x<w;x+=gridSize){
+  lines.push({x, offset: Math.random()*gridSize});
 }
-window.addEventListener("resize", resize);
-resize();
 
-let offset = 0;
+function draw(){
+  ctx.fillStyle="#0b0b0b";
+  ctx.fillRect(0,0,w,h);
 
-function draw() {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.strokeStyle = "rgba(0,160,255,0.15)";
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = "rgba(0, 200, 255, 0.2)";
+  ctx.lineWidth=1;
 
-  const size = 50;
-  offset = (offset + 0.3) % size;
-
-  for (let x = -size; x < canvas.width + size; x += size) {
+  // Вертикальные линии
+  for(let line of lines){
     ctx.beginPath();
-    ctx.moveTo(x + offset, 0);
-    ctx.lineTo(x + offset, canvas.height);
+    ctx.moveTo(line.x,0);
+    ctx.lineTo(line.x,h);
     ctx.stroke();
+    line.offset += 0.5;
+    if(line.offset>gridSize) line.offset=0;
   }
 
-  for (let y = -size; y < canvas.height + size; y += size) {
+  // Горизонтальные линии
+  for(let y=0;y<h;y+=gridSize){
     ctx.beginPath();
-    ctx.moveTo(0, y + offset);
-    ctx.lineTo(canvas.width, y + offset);
+    ctx.moveTo(0,y);
+    ctx.lineTo(w,y);
     ctx.stroke();
   }
 
   requestAnimationFrame(draw);
 }
+
 draw();
