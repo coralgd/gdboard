@@ -2,67 +2,51 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Панель модератора</title>
-<style>
-body{margin:0;padding:20px;font-family:'Orbitron',sans-serif;background:#0b0c10;color:#00f0ff;display:flex;flex-direction:column;align-items:center;}
-h1{font-size:2.5em;text-shadow:0 0 10px #00f0ff;margin-bottom:20px;}
-#usersList{width:95%;max-width:900px;display:flex;flex-direction:column;gap:12px;}
-.row{display:grid;grid-template-columns:2fr 80px 100px;padding:12px;border-radius:10px;background:rgba(0,0,0,0.55);border:1px solid rgba(0,255,255,0.2);box-shadow:0 2px 10px rgba(0,255,255,0.2);align-items:center;transition:all 0.3s;opacity:0;transform:translateY(-20px);}
-.row.show{opacity:1;transform:translateY(0);}
-input{padding:5px;border-radius:6px;border:none;background:#0b0c10;color:#00f0ff;outline:1px solid #00f0ff;width:60px;text-align:center;}
-.button{padding:5px 10px;border:none;border-radius:6px;background:#00a0ff;color:#000;font-weight:bold;cursor:pointer;transition:0.3s;}
-.button:hover{background:#00f0ff;box-shadow:0 0 10px #00f0ff;color:#000;}
-</style>
+<title>Moderator</title>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<h1>Панель модератора</h1>
-<div id="usersList"></div>
 
+<div class="app">
+  <div class="panel">
+    <h1>Панель модератора</h1>
+    <div class="list" id="list"></div>
+  </div>
+</div>
+
+<script src="hudBackground.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, updateDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
-const firebaseConfig = {
+const app = initializeApp({
   apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
   authDomain: "gdboard-add4a.firebaseapp.com",
-  projectId: "gdboard-add4a",
-  storageBucket: "gdboard-add4a.appspot.com",
-  messagingSenderId: "883125028740",
-  appId: "1:883125028740:web:c504de4139943b8606bfd1"
-};
+  projectId: "gdboard-add4a"
+});
 
-const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const usersList=document.getElementById('usersList');
 
 onAuthStateChanged(auth, async user=>{
-  if(!user) return window.location.href='index.html';
-  const uRef=doc(db,'users',user.uid);
-  const uSnap=await getDocs(collection(db,'users'));
-  const currentUser=(await (await getDocs(collection(db,'users'))).docs.find(d=>d.id===user.uid)).data();
-  if(currentUser.role!=='moderator' && currentUser.role!=='elder') return window.location.href='main.html';
+  if(!user) location.href="index.html";
 
-  const q=query(collection(db,'users'),where('situation','==','verified'),orderBy('points','desc'));
-  const snap=await getDocs(q);
-  let index=0;
+  const me = (await getDocs(collection(db,"users"))).docs.find(d=>d.id===user.uid).data();
+  if(me.role!=="moderator" && me.role!=="elder") location.href="main.html";
+
+  const q = query(collection(db,"users"), where("situation","==","verified"));
+  const snap = await getDocs(q);
+
   snap.forEach(d=>{
     const u=d.data();
-    if(u.role==='moderator' || u.role==='elder') return; // не показывать модеров
-    const row=document.createElement('div');
-    row.classList.add('row');
-    row.innerHTML=`<div>${u.nick||'Не указан'}</div>
-                     <input type="number" value="${u.points||0}" id="points_${d.id}">
-                     <button class="button" id="btn_${d.id}">Изменить</button>`;
-    usersList.appendChild(row);
-    setTimeout(()=>row.classList.add('show'),index*50);
-    document.getElementById(`btn_${d.id}`).addEventListener('click', async ()=>{
-      const val=document.getElementById(`points_${d.id}`).value;
-      await updateDoc(doc(db,'users',d.id),{points:Number(val)});
-      alert('Баллы обновлены!');
-    });
-    index++;
+    if(u.role!=="player") return;
+
+    const r=document.createElement("div");
+    r.className="row";
+    r.innerHTML=`<div></div><div>${u.nick}</div><input id="p${d.id}" value="${u.points}"><button class="btn">OK</button>`;
+    r.querySelector("button").onclick=()=>updateDoc(doc(db,"users",d.id),{points:+r.querySelector("input").value});
+    list.appendChild(r);
   });
 });
 </script>
