@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
+  <title>Главная</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -8,6 +10,7 @@
 
 <div class="panel">
   <h2>Главная</h2>
+
   <div class="row"><div>Ваш ник:</div><div id="nick"></div></div>
   <div class="row"><div>Баллы:</div><div id="points"></div></div>
   <div class="row"><div>Место:</div><div id="place"></div></div>
@@ -18,75 +21,37 @@
     <button id="checkBtn">Проверить</button>
     <p id="checkStatus" style="color:red"></p>
   </div>
-
-  <!-- Блок входа/регистрации прямо на главной -->
-  <div class="panel small-panel">
-    <h3>Сменить аккаунт</h3>
-    <div class="row">
-      <input type="email" id="emailMain" placeholder="Почта">
-      <input type="password" id="passwordMain" placeholder="Пароль">
-    </div>
-    <div class="row actions">
-      <button id="loginMain">Войти</button>
-      <button id="registerMain">Регистрация</button>
-    </div>
-    <p id="statusMain" style="color:red"></p>
-  </div>
-
 </div>
 
 <script type="module">
 import { auth, db } from "./firebase.js";
-import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const emailMain = document.getElementById("emailMain");
-const passMain = document.getElementById("passwordMain");
-const statusMain = document.getElementById("statusMain");
-
 onAuthStateChanged(auth, async user => {
-  if(!user) return; // уже на главной неавторизованного редиректит на index.html через кнопку
+  if(!user) return location.href="index.html";
 
   const ref = doc(db,"users",user.uid);
-  const data = (await getDoc(ref)).data();
+  const dataSnap = await getDoc(ref);
+  const data = dataSnap.data();
 
-  if(data.situation!=="verified") location.href="nick.html";
+  // Редирект если не верифицирован
+  if(data.situation !== "verified") location.href="nick.html";
 
   document.getElementById("nick").innerText = data.nick;
   document.getElementById("points").innerText = data.points;
   document.getElementById("place").innerText = data.place;
 
-  document.getElementById("leaderboardBtn").onclick = ()=>location.href="leaderboard.html";
+  document.getElementById("leaderboardBtn").onclick = () => location.href="leaderboard.html";
 
-  document.getElementById("checkBtn").onclick = ()=>{
-    if(data.role==="moderator"||data.role==="elder"){
-      location.href=(data.role==="elder"?"elder.html":"moderator.html");
-    }else{
-      document.getElementById("checkStatus").innerText="Ошибка: модерки нет";
+  document.getElementById("checkBtn").onclick = () => {
+    if(data.role==="moderator" || data.role==="elder"){
+      location.href = (data.role==="elder" ? "elder.html" : "moderator.html");
+    } else {
+      document.getElementById("checkStatus").innerText = "Ошибка: модерки нет";
     }
   };
 });
-
-// Вход/Регистрация на главной
-document.getElementById("loginMain").onclick = async ()=>{
-  try{
-    const cred = await signInWithEmailAndPassword(auth,emailMain.value,passMain.value);
-    location.reload();
-  }catch(e){statusMain.innerText=e.message;}
-};
-
-document.getElementById("registerMain").onclick = async ()=>{
-  try{
-    const cred = await createUserWithEmailAndPassword(auth,emailMain.value,passMain.value);
-    await setDoc(doc(db,"users",cred.user.uid),{
-      nick:"",
-      points:0,
-      situation:"not requested",
-      role:"player"
-    });
-    location.href="nick.html";
-  }catch(e){statusMain.innerText=e.message;}
-};
 </script>
 <script src="hudBackground.js"></script>
 </body>
