@@ -27,7 +27,16 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/fireba
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
-const firebaseConfig = {/* твой config */};
+// 🔹 Исправленный рабочий конфиг
+const firebaseConfig = {
+  apiKey: "AIzaSyB7QbVxGHR7Qm8o8Wzl_wxsCpzMUdS5rws",
+  authDomain: "gdboard-add4a.firebaseapp.com",
+  projectId: "gdboard-add4a",
+  storageBucket: "gdboard-add4a.appspot.com",
+  messagingSenderId: "883125028740",
+  appId: "1:883125028740:web:c504de4139943b8606bfd1"
+};
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -42,7 +51,6 @@ document.getElementById('loginBtn').addEventListener('click', async ()=>{
 document.getElementById('registerBtn').addEventListener('click', async ()=>{
   try{
     const cred = await createUserWithEmailAndPassword(auth,emailEl.value,passEl.value);
-    // создаем документ в users
     await setDoc(doc(db,'users',cred.user.uid),{
       nick:'',
       points:0,
